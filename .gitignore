@@ -1,3 +1,4 @@
 Lenet-5/datasets/
+VGG-16/dataset/
 *.pt
 *.pth
