@@ -135,7 +135,8 @@ if __name__ == "__main__":
     net = Resnet50(img_channel=3,num_classes=1000)
     model_rand_input = torch.randn(4,3,224,224)
     output = net(torch.randn(4,3,224,224)).to("cuda")
-    print(output.size())
+    torch.save(net,"Resnet.pth")
+    print(net)
 
 
 
