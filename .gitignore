@@ -2,3 +2,8 @@ Lenet-5/datasets/
 VGG-16/dataset/
 *.pt
 *.pth
+Image-Captioning/flickr8k/
+Image-Captioning/flickr8k
+!/Image-Captioning/runs/
+Image-Captioning/__pycache__/
+Image-Captioning/runs/
