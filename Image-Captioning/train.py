@@ -34,8 +34,7 @@ def train():
     vocab_size = len(dataset.vocab)
     num_layers = 1
     learning_rate = 3e-4
-    num_epochs = 3
-
+    num_epochs = 1
     writer = SummaryWriter("runs/flickr")
     step = 0
 
