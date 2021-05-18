@@ -1,4 +1,4 @@
-#TODO : REVIST THIS CODE AND REWRITE IT ON YOU OWN FOR TEXT DATASET LOADING
+#TODO : REVI  ST THIS CODE AND REWRITE IT ON YOU OWN FOR TEXT DATASET LOADING
 
 import os  # when loading file paths
 import pandas as pd  # for lookup in annotation file
