@@ -7,7 +7,7 @@ from io import open
 import os
 import string
 import unidecode
-
+from tqdm import tqdm
 
 all_characters =  string.printable
 n_letters = len(all_characters) + 1 #EOS Marker String
@@ -19,8 +19,8 @@ file = unidecode.unidecode(open("English.txt").read())
 
 class RNN(nn.Module):
     def __init__(self,input_size,hidden_size,num_layers,output_size):
-        super(self,RNN).__init__()
-        self.hidden_size = None
+        super(RNN,self).__init__()
+        self.hidden_size = hidden_size
         self.num_layers = num_layers
 
         self.embed = nn.Embedding(input_size,hidden_size)
@@ -29,7 +29,7 @@ class RNN(nn.Module):
 
     def forward(self,input_x,hidden_state,cell_state):
         output = self.embed(input_x)
-        output,(hidden,cell) = self.LSTM_1(output.squeeze(1),(hidden_state,cell_state))
+        output,(hidden,cell) = self.LSTM_1(output.unsqueeze(1),(hidden_state,cell_state))
         output = self.fc(output.reshape(output.shape[0],-1)) #Turning 2 dimensional matrix into 3 dimensional matrix
         return output, (hidden,cell)
 
@@ -48,10 +48,10 @@ class Generator:
 
     def __init__(self):
         self.chunk_len = 250 #Chunk of text
-        self.num_epochs = 30 #number of epochs
+        self.num_epochs = 500 #number of epochs
         self.batch_size = 1
         self.print_every = 50 # Print results from training loop every 50 epochs
-        self.hidden_layers = 256
+        self.hidden_size = 256
         self.num_layers = 2
         self.learning_rate = 0.003
 
@@ -108,11 +108,49 @@ class Generator:
             )
 
             output_dist = output.data.view(-1).div(temperature).exp()
-            top_char = output_dist.multinomial(output_dist,1)[0]
+            top_char = torch.multinomial(output_dist,1)[0]
             predicted_char = all_characters[top_char]
             predicted+= predicted_char
             last_char = self.char_tensor(predicted_char)
         return predicted
+
+    def train(self):
+        self.rnn = RNN(
+            n_letters,self.hidden_size,self.num_layers,n_letters
+        ).to(device)
+
+        optimizer = torch.optim.Adam(self.rnn.parameters(),lr=self.learning_rate)
+        criterion = nn.CrossEntropyLoss()
+
+        print("=> Starting training")
+
+        for epoch in tqdm(range(1,self.num_epochs+1)):
+            print("EPOCH : ",epoch)
+            inp,target = self.get_random_batch()
+            hidden,cell = self.rnn.init_hidden(batch_size=self.batch_size)
+            self.rnn.zero_grad()
+            loss = 0
+            inp = inp.to(device)
+            target = target.to(device)
+
+            for character_index in range(self.chunk_len):
+                output,(hidden,cell) = self.rnn(inp[:,character_index],hidden,cell)
+                loss += criterion(output,target[:,character_index])
+
+            loss.backward()
+            optimizer.step()
+            loss = loss.item()/self.chunk_len
+
+            if epoch % self.print_every ==0:
+                print(f"Loss:{loss}")
+                print(self.generate())
+
+
+if __name__ == "__main__":
+    gennames = Generator()
+    gennames.train()
+
+
 
 
 #TODO Converting to ASCII to remove all special symbols
