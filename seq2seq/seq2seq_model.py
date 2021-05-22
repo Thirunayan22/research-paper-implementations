@@ -120,6 +120,8 @@ def prepare_data(lang_1,lang_2,reverse=False):
 
 input_lang,output_lang,pairs = prepare_data("eng","fra",reverse=True)
 # print(input_lang.word2index)
+print(len(pairs))
+
 
 def showPlots(points):
     plt.figure()
@@ -224,12 +226,17 @@ def train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_o
         i = 0
         for decoder_input_idx in range(target_length):
             decoder_output,decoder_hidden = decoder(decoder_input,decoder_hidden)
-            i += 1
+            #DEBUG i += 1
             #DEBUG print(f"REACHED POINT : {str(i)}")
             #DEBUG print("TARGET TENSOR: ",target_tensor[decoder_input_idx].size())
             decoder_input = target_tensor[decoder_input_idx]
+            print("DECODER OUTPUT : ",decoder_output.size())
+            print("TARGET SIZE :  ",target_tensor[decoder_input_idx].size())
+            print("TARGET VALUE : " ,target_tensor[decoder_input_idx])
+
+
             #DEBUG print("REACHED DECODER OUTPUT")
-             #DEBUG print(f"DECODER OUTPUT : {decoder_output.size()}")
+            #DEBUG print(f"DECODER OUTPUT : {decoder_output.size()}")
             loss+= criterion(decoder_output,target_tensor[decoder_input_idx])
 
     else:
@@ -372,11 +379,11 @@ if __name__ == "__main__":
     encoder1 = EncoderModel(input_lang.num_words,hidden_size).to(device)
     decoder1 = DecoderModel(hidden_size=hidden_size,output_size=output_lang.num_words).to(device)
 
-    # trainIters(encoder1,decoder1,20000,print_every=1000) #75,000 epochs works like a charm
+    trainIters(encoder1,decoder1,1,print_every=1000) #75,000 epochs works like a charm
     # save_models(encoder1,decoder1,save_folder="models")
 
-    encoder1,decoder1  =  load_models("./encoder_model.pth","./decoder_model.pth")
-    evaluateRandomly(encoder1,decoder1)
+    # encoder1,decoder1  =  load_models("./encoder_model.pth","./decoder_model.pth")
+    # evaluateRandomly(encoder1,decoder1)
 
 
 
