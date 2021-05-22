@@ -107,7 +107,6 @@ def prepare_data(lang_1,lang_2,reverse=False):
     input_lang,output_lang,pairs = readLangs(lang_1,lang_2,reverse)
     print(f"Read {len(pairs)} sentence pairs")
     # print(pairs)
-    print(pairs[100:200])
     pairs = filterPairs(pairs)
     print(f"Trimmed to {len(pairs)} filtered pairs")
     for pair in pairs:
