@@ -1,27 +1,23 @@
-import os
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import unicodedata
 import matplotlib.pyplot as plt
-
-import unidecode
-import string
+from tqdm import tqdm
 import time
 import math
 import re
 import random
 import matplotlib.ticker as ticker
-import numpy as np
 import os
+
 os.environ["CUDA_LAUNCH_BLOCKING"]="1"
 
 plt.switch_backend("agg")
 
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-device = "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+# device = "cpu"
 #LOADING DATA
 
 # INDEX -> WORD and WORD -> INDEX CLASS WITH TOKENIZER
@@ -118,8 +114,8 @@ def prepare_data(lang_1,lang_2,reverse=False):
         input_lang.add_sentence(pair[0])
         output_lang.add_sentence(pair[1])
 
-    print(input_lang.name,input_lang.num_words)
-    print(len(input_lang.word2index))
+    #DEBUG print(input_lang.name,input_lang.num_words)
+    #DEBUG print(len(input_lang.word2index))
     print(output_lang.name,output_lang.num_words)
     return input_lang,output_lang,pairs
 
@@ -163,7 +159,7 @@ class DecoderModel(nn.Module):
         self.embedding = nn.Embedding(output_size,hidden_size)
         self.GRU = nn.GRU(hidden_size,hidden_size)
         self.output_linear = nn.Linear(hidden_size,output_size)
-        print("OUTPUT SIZE ",output_size )
+        #DEBUG print("OUTPUT SIZE ",output_size )
         self.softmax =  nn.LogSoftmax(dim=1)
 
     def _init_hidden(self):
@@ -178,9 +174,6 @@ class DecoderModel(nn.Module):
         output = self.softmax(output)
 
         return output,hidden
-
-# BATCH_SIZE = 32
-# EPOCHS = 500
 
 
 def test_encoder(encoder):
@@ -205,7 +198,7 @@ teacher_forcing_ratio  = 0.5
 def train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_optimizer,criterion,max_length=MAX_LENGTH):
 
     encoder_hidden = encoder._init_hidden()
-    print("ENCODER HIDDEN : " ,encoder_hidden)
+    #DEBUG print("ENCODER HIDDEN : " ,encoder_hidden)
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
 
@@ -215,7 +208,7 @@ def train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_o
     encoder_outputs = torch.zeros(max_length,encoder.hidden_size,device=device)
     loss = 0
 
-    print(input_length)
+    #DEBUG print(input_length)
     for encoder_input_idx in range(input_length):
         encoder_output,encoder_hidden = encoder(input_tensor[encoder_input_idx],encoder_hidden)
         encoder_outputs[encoder_input_idx] = encoder_output[0,0]
@@ -225,38 +218,38 @@ def train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_o
     decoder_hidden = encoder_hidden
 
     # use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
-    print("TARGET LENGTH: ",target_length)
-    print("TARGET TENSOR: ", len(target_tensor))
+    #DEBUG print("TARGET LENGTH: ",target_length)
+    #DEBUG print("TARGET TENSOR: ", len(target_tensor))
     use_teacher_forcing = True
     if use_teacher_forcing:
         i = 0
         for decoder_input_idx in range(target_length):
             decoder_output,decoder_hidden = decoder(decoder_input,decoder_hidden)
             i += 1
-            print(f"REACHED POINT : {str(i)}")
-            print("TARGET TENSOR: ",target_tensor[decoder_input_idx].size())
+            #DEBUG print(f"REACHED POINT : {str(i)}")
+            #DEBUG print("TARGET TENSOR: ",target_tensor[decoder_input_idx].size())
             decoder_input = target_tensor[decoder_input_idx]
-            print("REACHED DECODER OUTPUT")
-            print(f"DECODER OUTPUT : {decoder_output.size()}")
+            #DEBUG print("REACHED DECODER OUTPUT")
+             #DEBUG print(f"DECODER OUTPUT : {decoder_output.size()}")
             loss+= criterion(decoder_output,target_tensor[decoder_input_idx])
 
     else:
 
         for decoder_input_idx in range(target_length):
-            print("TARGET LENGTH: ", target_length)
-            print("TARGET TENSOR: ", len(target_tensor))
+            #DEBUG print("TARGET LENGTH: ", target_length)
+            #DEBUG print("TARGET TENSOR: ", len(target_tensor))
             decoder_ouput,decoder_hidden = decoder(decoder_input,decoder_hidden)
             top_tensor,top_index = decoder_ouput.topk(1)
             decoder_input = top_index.squeeze().detach().long() #TODO MADE CHANGE changes top_tensor to top_index
-            print(target_tensor[decoder_input_idx])
+            #DEBUG print(target_tensor[decoder_input_idx])
             loss += criterion(decoder_ouput,target_tensor[decoder_input_idx])
             if decoder_input.item() == EOS_token:
                 break
 
-        loss.backward()
-        encoder_optimizer.step()
-        decoder_optimizer.step()
-        return loss.item()/target_length
+    loss.backward()
+    encoder_optimizer.step()
+    decoder_optimizer.step()
+    return loss.item()/target_length
 
 
 def asMinutes(s):
@@ -283,7 +276,7 @@ def trainIters(encoder,decoder,epochs,print_every=1000,plot_every=1000,learning_
     training_pairs = [tensorFromPairs(random.choice(pairs)) for i in range(epochs)] # selecting random pairs to translate
     criterion = nn.NLLLoss() #negative loss likelikelihood
 
-    for iter in range(1,epochs+1):
+    for iter in tqdm(range(1,epochs+1)):
         training_pair = training_pairs[iter-1]
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
@@ -303,6 +296,27 @@ def trainIters(encoder,decoder,epochs,print_every=1000,plot_every=1000,learning_
             plot_loss_total = 0
 
 
+def save_models(encoder_model,decoder_model,save_folder):
+    if not os.path.exists(save_folder):
+        os.mkdir(save_folder)
+
+    # torch.save(encoder_model,f"{save_folder}/encoder_model_{time.time()}.pth")
+    # torch.save(decoder_model,f"{save_folder}/decoder_model_{time.time()}.pth")
+
+    torch.save(encoder_model,"encoder_model.pth")
+    torch.save(decoder_model,"decoder_model.pth")
+
+def load_models(encoder_model_path,decoder_model_path):
+
+    encoder_model = torch.load(encoder_model_path)
+    decoder_model = torch.load(decoder_model_path)
+
+    encoder_model.eval()
+    decoder_model.eval()
+
+    return encoder_model,decoder_model
+
+
 
 #running through a single sentence
 def evaluate(encoder,decoder,sentence,max_length=MAX_LENGTH):
@@ -313,13 +327,13 @@ def evaluate(encoder,decoder,sentence,max_length=MAX_LENGTH):
 
         #initializing encoder outputs so that they can be appended
         encoder_outputs = torch.zeros(max_length,encoder.hidden_size,device=device)
-        print(f"ENCODER OUTPUT DIM : {encoder_outputs.ndimension}")
+        #DEBUG print(f"ENCODER OUTPUT DIM : {encoder_outputs.ndimension}")
 
         #Loop through encoder inputs and feed them to encoder model
         for encoder_input_idx in range(input_length):
             encoder_output,encoder_hidden = encoder(input_tensor[encoder_input_idx],encoder_hidden)
             encoder_outputs[encoder_input_idx] += encoder_output[0,0]
-            print(f"ENCODER OUTPUT {encoder_output}")
+            #DEBUG print(f"ENCODER OUTPUT {encoder_output}")
 
         decoder_input = torch.tensor([[SOS_token]],device=device)
         decoder_hidden = encoder_hidden
@@ -327,19 +341,19 @@ def evaluate(encoder,decoder,sentence,max_length=MAX_LENGTH):
         decoded_words = []
 
 
-        for decoder_input in range(max_length):
-            decoder_output,decoder_hidden = decoder(decoder_input,decoder_hidden,encoder_outputs)
+        for decoder_input_idx in range(max_length):
+            decoder_output,decoder_hidden = decoder(decoder_input,decoder_hidden)
 
             topv,topi = decoder_output.data.topk(1)
             if topi.item() == EOS_token:
                 decoded_words.append("<EOS>")
                 break
             else:
-                decoded_words.append(output_lang.index2word[topi.item])
+                decoded_words.append(output_lang.index2word[topi.item()])
 
             decoder_input = topi.squeeze().detach()
 
-        print("TOPI" ,topi)
+        #DEBUG print("TOPI" ,topi)
         return decoded_words
 
 def evaluateRandomly(encoder,decoder,n=10):
@@ -359,7 +373,11 @@ if __name__ == "__main__":
     encoder1 = EncoderModel(input_lang.num_words,hidden_size).to(device)
     decoder1 = DecoderModel(hidden_size=hidden_size,output_size=output_lang.num_words).to(device)
 
-    trainIters(encoder1,decoder1,75000,print_every=5000)
+    # trainIters(encoder1,decoder1,20000,print_every=1000) #75,000 epochs works like a charm
+    # save_models(encoder1,decoder1,save_folder="models")
+
+    encoder1,decoder1  =  load_models("./encoder_model.pth","./decoder_model.pth")
+    evaluateRandomly(encoder1,decoder1)
 
 
 
@@ -368,7 +386,7 @@ if __name__ == "__main__":
 The decoder output dimension should be [1,2803] but it was 256 , so what you did was you changed edited the decoder model
 and it's output to be output = self.softmax(self.out(output[0])) where you had written  output = self.softmax(self.softmax(output[0]))
 
-This was the correction you made\
+This was the correction you made
 
 Ongoing traceback error:
   File "seq2seq_model.py", line 362, in <module>
