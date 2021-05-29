@@ -15,7 +15,7 @@ class Encoder(nn.Module):
         self.LSTM_1 = nn.LSTM(embedding_size, hidden_size, num_layers, bidirectional=True)
 
         # *2 because LSTM is bidirectional and when passing to decoder
-        # we want to map it from hidden_sisze*2 to hidden_size
+        # we want to map it from hidden_size*2 to hidden_size
 
         self.fc_hidden = nn.Linear(hidden_size * 2, hidden_size)
 
@@ -43,7 +43,7 @@ class Encoder(nn.Module):
 
 """
 
-All the outputs states of the encoder LSTM denoted by encoder_states along with cell alues and hidden_states are passed 
+All the outputs states of the encoder LSTM denoted by encoder_states along with cell values and hidden_states are passed 
 into the decoder.
 
 Using these values the decoder creates a energy matrix which will then be input into the attention function. 
@@ -54,7 +54,6 @@ to the LSTM layer of the decoder.
 
 The outputs of this LSTM layers are then passed onto a fully connected layer which then does the final classification.   
 
-  
 """
 
 ##########################ATTENTION DECODER EXPLANATION ##################
@@ -67,7 +66,7 @@ class AttentionDecoder(nn.Module):
         self.embedding = nn.Embedding(input_size,embedding_size)
         self.dropout   = nn.Dropout(dropout_probability)
 
-        self.LSTM      = nn.LSTM(hidden_size*2+embedding_size,hidden_size,num_layers) # hidden_size*2 because the encoder_
+        self.LSTM = nn.LSTM(hidden_size*2+embedding_size,hidden_size,num_layers) # hidden_size*2 because the encoder_
         # outputs are bidirectional and + embedding_size, because we are concatenating the enocoder_steps with the embedding
 
         # here hidden_size is multiplied by 3 because we are first adding the encoder output and then we are also

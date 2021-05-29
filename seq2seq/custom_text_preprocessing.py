@@ -55,9 +55,6 @@ def normalizeString(s):
     s = re.sub("[^a-zA-z.!?]+", r" ", s)
     return s
 
-def sentenceToTensor(sentence):
-    for word in sentence:
-        pass
 
 eng_prefixes = (
     "i am ", "i m ",
