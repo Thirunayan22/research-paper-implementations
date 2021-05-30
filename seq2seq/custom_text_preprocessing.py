@@ -158,29 +158,30 @@ def train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_o
     decoder_optimizer.step()
     return loss.item()/target_length
 
-def trainIters(input_lang,target_lang,encoder:EncoderModel,decoder:DecoderModel,pairs:List,epochs:int,print_every=1000,plot_every=1000,learning_rate=0.01):
+def trainIters(input_lang,target_lang,encoder:str,decoder:str,pairs:List,epochs:int,print_every=1000,plot_every=1000,learning_rate=0.01):
     start = time.time()
     plot_losses = []
     print_loss_total = 0
     plot_loss_total = 0
 
-    encoder_optimizer = optim.SGD(encoder.parameters(),lr=learning_rate)
-    decoder_optimizer = optim.SGD(decoder.parameters(),lr=learning_rate)
+    # encoder_optimizer = optim.SGD(encoder.parameters(),lr=learning_rate)
+    # decoder_optimizer = optim.SGD(decoder.parameters(),lr=learning_rate)
 
     training_pairs = [tensorFromPairs(input_lang=input_lang,target_lang=target_lang,pair=random.choice(pairs)) for i in range(epochs)]
     criterion = nn.NLLLoss() # Negative log loss likelihood
 
-    print("Training PAIRS",training_pairs[:10])
 
-    for iter in tqdm(range(1,epochs+1)): #EPOCHS+1 SO THAT  EPOCHS DOESN'T START AT ZERO AND PREVIOUS RANGE(EPOCHS) IS NOT ZERO
-        training_pair = training_pairs[iter-1] #iter-1 because training pair indexing starts at 0
-        input_tensor = training_pair[0]
-        target_tensor = training_pair[1]
-        # print("INPUT TENSOR IN TRAIN ITER : " ,input_tensor)
-        # print("TARGET TENSOR IN TRAIN ITER : ",target_tensor)
-
-        loss = train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_optimizer,criterion)
-        print_loss_total += loss
+    print("Training PAIRS",training_pairs[3][1].shape)
+    #
+    # for iter in tqdm(range(1,epochs+1)): #EPOCHS+1 SO THAT  EPOCHS DOESN'T START AT ZERO AND PREVIOUS RANGE(EPOCHS) IS NOT ZERO
+    #     training_pair = training_pairs[iter-1] #iter-1 because training pair indexing starts at 0
+    #     input_tensor = training_pair[0]
+    #     target_tensor = training_pair[1]
+    #     # print("INPUT TENSOR IN TRAIN ITER : " ,input_tensor)
+    #     # print("TARGET TENSOR IN TRAIN ITER : ",target_tensor)
+    #
+    #     loss = train(input_tensor,target_tensor,encoder,decoder,encoder_optimizer,decoder_optimizer,criterion)
+    #     print_loss_total += loss
 
 
 def save_models(encoder_model,decoder_model,save_folder):
@@ -199,6 +200,9 @@ if __name__ == "__main__":
     dataset_path = f"data/eng-fra.txt"
     input_language,target_language,pairs = read_text("eng","fra",max_length=MAX_LENGHT,dataset_path=dataset_path,reverse=True)
 
+    print("INPUT LANGUAGE WORDS",input_language.num_words)
+    print("TARGET LANGUAGE WORDS ",target_language.num_words)
+
     print("Sentence :",pairs[0] )
     print("Tensor : " , tensorFromPairs(target_lang=target_language,input_lang=input_language,pair=pairs[0]))#OUTPUT LANGUAGE IS ENGLISH
     print("INPUT LANGUAGE",input_language.lang_name)
@@ -208,39 +212,41 @@ if __name__ == "__main__":
     print(len(pairs))
 
 
-    encoder_model = torch.load("encoder_model.pth")
-    decoder_model = torch.load("decoder_model.pth")
+    # encoder_model = torch.load("encoder_model.pth")
+    # decoder_model = torch.load("decoder_model.pth")
 
 
     ############### ENCODER TESTING #############################################################
-    encoder_input = input_sample_tensor[0]
-    encoder_outputs = torch.zeros(MAX_LENGHT,encoder_model.hidden_size,device=device)
-    encoder_hidden  = encoder_model._init_hidden()
+    # encoder_input = input_sample_tensor[0]
+    # encoder_outputs = torch.zeros(MAX_LENGHT,encoder_model.hidden_size,device=device)
+    # encoder_hidden  = encoder_model._init_hidden()
 
     # print(input_sample_tensor.shape)
-    print("ENCODER INPUT : ",encoder_input)
-    output,hidden = encoder_model(encoder_input,encoder_hidden) #insert word indexes one by one
-    print("ENCODER OUTPUT : ", output[0,0].shape)
-    print("ENCODER HIDDEN ", hidden.shape)
-    ############### ENCODER TESTING #############################################################
+    # print("ENCODER INPUT : ",encoder_input)
+    # output,hidden = encoder_model(encoder_input,encoder_hidden) #insert word indexes one by one
+    # print("ENCODER OUTPUT : ", output[0,0].shape)
+    # print("ENCODER HIDDEN ", hidden.shape)
+    # ############### ENCODER TESTING #############################################################
 
     ############### DECODER TESTING #############################################################
 
 
-    decoder_input = torch.tensor([[SOS_TOKEN]],device=device,dtype=torch.long)
-    decoder_ouptputs = torch.zeros(input_language.num_words)
-    decoder_hidden = decoder_model._init_hidden()
+    # decoder_input = torch.tensor([[SOS_TOKEN]],device=device,dtype=torch.long)
+    # decoder_ouptputs = torch.zeros(input_language.num_words)
+    # decoder_hidden = decoder_model._init_hidden()
+    #
+    # print("DECODER INPUT : ",decoder_input)
+    # decoder_output,decoder_hidden = decoder_model(decoder_input,decoder_hidden)
+    #
+    # print("DECODER OUTPUT : " ,decoder_output.topk(1)[1].squeeze().detach().long().item()) # returns index of word with highest probability for decoder output
+    # print("DECODER HIDDEN : " ,decoder_hidden.shape)
+    #
+    # ############### DECODER TESTING #############################################################
+    #
+    #
+    # print("STARTING MODEL TRAINING.....")
+    # trainIters(input_lang=input_language,target_lang=target_language,encoder=encoder_model,decoder=decoder_model,pairs=pairs,epochs=10000)
+    #
+    trainIters(input_lang=input_language,target_lang=target_language,encoder="hola",decoder="hola",pairs=pairs,epochs=10000)
 
-    print("DECODER INPUT : ",decoder_input)
-    decoder_output,decoder_hidden = decoder_model(decoder_input,decoder_hidden)
-
-    print("DECODER OUTPUT : " ,decoder_output.topk(1)[1].squeeze().detach().long().item()) # returns index of word with highest probability for decoder output
-    print("DECODER HIDDEN : " ,decoder_hidden.shape)
-
-    ############### DECODER TESTING #############################################################
-
-
-    print("STARTING MODEL TRAINING.....")
-    trainIters(input_lang=input_language,target_lang=target_language,encoder=encoder_model,decoder=decoder_model,pairs=pairs,epochs=10000)
-
-    save_models(encoder_model,decoder_model,"./models")
+    # save_models(encoder_model,decoder_model,"./models")
