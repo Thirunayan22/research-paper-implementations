@@ -7,3 +7,5 @@ Image-Captioning/flickr8k
 !/Image-Captioning/runs/
 Image-Captioning/__pycache__/
 Image-Captioning/runs/
+TorchText/.data
+seq2seq/.data
