@@ -19,7 +19,7 @@ label = Field(sequential=False,use_vocab=False)
 fields = {"quote":("q",quote),"score":("s",label)}
 
 train_data,test_data = TabularDataset.splits(
-    path="json_data",train="train.json",test="test.json",format="json",fields=fields
+    path="../TorchText/json_data",train="train.json",test="test.json",format="json",fields=fields
 )
 
 
