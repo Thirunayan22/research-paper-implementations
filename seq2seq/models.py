@@ -24,6 +24,7 @@ class EncoderModel(nn.Module):
         output,hidden = self.gru(output,hidden)
         return output,hidden
 
+
 class DecoderModel(nn.Module):
     def __init__(self,hidden_size,output_size):
         super(DecoderModel,self).__init__()
@@ -33,7 +34,7 @@ class DecoderModel(nn.Module):
         self.embedding = nn.Embedding(output_size,hidden_size)
         self.GRU = nn.GRU(hidden_size,hidden_size)
         self.output_linear = nn.Linear(hidden_size,output_size)
-        #DEBUG print("OUTPUT SIZE ",output_size )
+        # DEBUG print("OUTPUT SIZE ",output_size )
         self.softmax =  nn.LogSoftmax(dim=1)
 
     def _init_hidden(self):
@@ -48,6 +49,7 @@ class DecoderModel(nn.Module):
         output = self.softmax(output)
 
         return output,hidden
+
 
 class AttentionDecoder(nn.Module):
     def __init__(self,embedding_size:int,hidden_size:int,output_size:int,dropout_probability:float,max_len:int):
